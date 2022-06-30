@@ -17,7 +17,7 @@
 #define FlagDefended 3
 #define FlagDropped  4
 
-
+// code trying fix by PG Burn and IndomiiKuah [changes 1.1] 346, 940, 1140, 2400
 new bool:cpmap = false;
 new mapisset;
 new classfunctionloaded = 0;
@@ -343,6 +343,8 @@ new Handle:Short_CircuitPoints = INVALID_HANDLE;
 new Handle:Pomson_Points = INVALID_HANDLE;
 new Handle:Eureka_Effect_Points = INVALID_HANDLE;
 
+//Jungle Inferno 2017 changes 1.1
+new Handle:MorbinBall_Points = INVALID_HANDLE;
 
 //--------------------
 
@@ -936,6 +938,7 @@ createdbplayer()
 	len += Format(query[len], sizeof(query)-len, "`KW_Short_Circuit` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_Machina` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_Machina_DoubleKill` int(11) NOT NULL default '0',");
+	len += Format(query[len], sizeof(query)-len, "'KW_MorbinBall' int(11) NOT NULL DEFAULT '0', "); //changes 1.1
 	len += Format(query[len], sizeof(query)-len, "`KW_Diamondback` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_UnarmedCombat` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_WangaPrick` int(11) NOT NULL default '0',");
@@ -944,6 +947,7 @@ createdbplayer()
 	len += Format(query[len], sizeof(query)-len, "`KW_Saxxy` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`EyeBossStuns` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`EyeBossKills` int(11) NOT NULL default '0',");
+	///len += Format(query[len], sizeof(query)-len, "`EyeBossKills` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_phlogistinator` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_manmelter` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_thirddegree` int(11) NOT NULL default '0',");
@@ -1133,6 +1137,7 @@ public CreateCvars()
 	TeleUsePoints = CreateConVar("rank_tele_use_points","1","Points:Engineer - Teleporter Use");
 	WidowmakerPoints = CreateConVar("rank_widowmaker_points","1","Points:Engineer - Widowmaker");
 	Short_CircuitPoints = CreateConVar("rank_shortcircuit_points","0","Points:Engineer - The Short Circuit");
+	MorbinBall_Points = CreateConVar("rank_morbinball_points", "0", "Points:Engineer - Dragon Ball Z"); //changes 1.1
 	Pomson_Points = CreateConVar("rank_pomson_points","7","Points:Engineer - The Pomson 6000");
 	Eureka_Effect_Points = CreateConVar("rank_eureka_effect_points","7","Points:Engineer - The Eureka Effect");
 
@@ -2386,12 +2391,21 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 					else if (strcmp(weapon[0], "short_circuit", false) == 0)
 					{
 						pointvalue = GetConVarInt(Short_CircuitPoints)
-						Format(query, sizeof(query), "UPDATE %s SET POINTS = POINTS + 0, KILLS = KILLS + 1, KW_Short_Circuit = KW_Short_Circuit + 1 WHERE STEAMID = '%s'", sTableName, pointvalue ,steamIdattacker);
+						Format(query, sizeof(query), "UPDATE %s SET POINTS = POINTS + %i, KILLS = KILLS + 1, KW_Short_Circuit = KW_Short_Circuit + 1 WHERE STEAMID = '%s'", sTableName, pointvalue ,steamIdattacker);
 						if (nofakekill == true && isbot == false)
 						{
 							SQL_TQuery(db,SQLErrorCheckCallback, query);
 						}
 					}
+					else if (strcmp(weapon[0], "tf_projectile_mechanicalarmorb", false) == 0) //changes 1.1
+                    {
+                        pointvalue = GetConVarInt(MorbinBall_Points)
+                        Format(query, sizeof(query), "UPDATE %s SET POINTS = POINTS + %i, KILLS = KILLS = 1, KW_MorbinBall = KW_MorbinBall + 1 WHERE STEAMID = '%s'", sTableName, pointvalue, steamIdattacker);
+                        if (nofakekill == true && isbot == false)
+                        {
+                            SQL_TQuery(db, SQLErrorCheckCallback, query);
+                        }
+                    }
 					else if (strcmp(weapon[0], "machina", false) == 0)
 					{
 						pointvalue = GetConVarInt(Machina_Points)
