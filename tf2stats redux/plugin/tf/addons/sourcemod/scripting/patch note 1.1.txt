@@ -1,0 +1,8 @@
+changes on:
+
+-----------Added
+weapon:
+sc m2
+
+Bosses:
+headless horseless

@@ -17,7 +17,8 @@
 #define FlagDefended 3
 #define FlagDropped  4
 
-// code trying fix by PG Burn and IndomiiKuah [changes 1.1] 346, 940, 1140, 2400
+// code trying fix by PG Burn and IndomiiKuah [changes 1.1] 346, 940, 1140, 2400, 476, 954, 955, 1013, 1014, 1312, 1317, 1343
+
 new bool:cpmap = false;
 new mapisset;
 new classfunctionloaded = 0;
@@ -473,6 +474,9 @@ new Handle:stealsandvichpoints = INVALID_HANDLE;
 new Handle:EyeBossKillAssist = INVALID_HANDLE;
 new Handle:EyeBossStun = INVALID_HANDLE;
 
+//Halloween Boss
+new Handle:HeadlessHatmanKillAssist = INVALID_HANDLE;
+new Handle:HeadlessHatmanStun = INVALID_HANDLE;
 //--------------------
 
 
@@ -947,7 +951,8 @@ createdbplayer()
 	len += Format(query[len], sizeof(query)-len, "`KW_Saxxy` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`EyeBossStuns` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`EyeBossKills` int(11) NOT NULL default '0',");
-	///len += Format(query[len], sizeof(query)-len, "`EyeBossKills` int(11) NOT NULL default '0',");
+	len += Format(query[len], sizeof(query)-len, "`HeadlessHatmanKills` int(11) NOT NULL default '0',");
+	len += Format(query[len], sizeof(query)-len, "`HeadlessHatmanStuns` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_phlogistinator` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_manmelter` int(11) NOT NULL default '0',");
 	len += Format(query[len], sizeof(query)-len, "`KW_thirddegree` int(11) NOT NULL default '0',");
@@ -1005,7 +1010,8 @@ public CreateCvars()
 
 	EyeBossKillAssist = CreateConVar("rank_eyeboss_kill_points","20","Points: Monoculus Kill Assist");
 	EyeBossStun = CreateConVar("rank_eyeboss_stun_points","2","Points: Monoculus Stun");
-
+	HeadlessHatmanKillAssist = CreateConVar("rank_headlesshatman_kill_points","20","Points: Horseless Headless Horsemann Kill Assist");
+	HeadlessHatmanStun = CreateConVar("rank_headlesshatman_stun_points","2","Points: Horseless Headless Horsemann Stun");
 	//Scout
 	scattergunpoints = CreateConVar("rank_scattergunpoints","2","Points:Scout - Scattergun");
 	batpoints = CreateConVar("rank_batpoints","4","Points:Scout - Bat");
@@ -1302,6 +1308,62 @@ public HookEvents()
 	//Halloween 2011!
 	HookEvent("eyeball_boss_killer", OnEyeBossDeath);
 	HookEvent("eyeball_boss_stunned", OnEyeBossStunned);
+
+	//Halloween changes 1.1
+	HookEvent("headlesshatman_boss_killer", OnHeadlessHatmanDeath);
+	HookEvent("headlesshatman_boss_stunned", OnHeadlessHatmanStunned);
+}
+
+public OnHeadlessHatmanDeath(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	if (rankingactive && rankingenabled)
+	{
+		new client = GetEventInt(event, "player_entindex")
+		new String:SteamID[MAX_LINE_WIDTH];
+		GetClientAuthString(client, SteamID, sizeof(SteamID));
+		decl String:query[512];
+		new iPoints = GetConVarInt(HeadlessHatmanKillAssist);
+
+		Format(query, sizeof(query), "UPDATE %s SET POINTS = POINTS + %i, HeadlessHatmanKills = HeadlessHatmanKills + 1 WHERE STEAMID = '%s'", sTableName, iPoints, SteamID);
+		sessionpoints[client] = sessionpoints[client] + iPoints;
+		SQL_TQuery(db, SQLErrorCheckCallback, query);
+		new pointmsgval = GetConVarInt(pointmsg);
+		if (pointmsgval >=1)
+		{
+			if (pointmsgval == 1)
+				PrintToChatAll("\x04[%s]\x05 %N\x01 got %i points for helping to kill \x06The Monoculus!!", CHATTAG, client, iPoints)
+			else if (cookieshowrankchanges[client])
+			{
+				PrintToChat(client,"\x04[%s]\x01 you got %i points for helping to kill \x06The Monoculus!!", CHATTAG, iPoints)
+			}
+		}
+	}
+}
+
+public OnHeadlessHatmanStunned(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	if (rankingactive && rankingenabled)
+	{
+		new client = GetEventInt(event, "player_entindex")
+		new String:SteamID[MAX_LINE_WIDTH];
+		GetClientAuthString(client, SteamID, sizeof(SteamID));
+		decl String:query[512];
+		new iPoints = GetConVarInt(HeadlessHatmanStun);
+
+		Format(query, sizeof(query), "UPDATE %s SET POINTS = POINTS + %i, HeadlessHatmanStuns = HeadlessHatmanStuns + 1 WHERE STEAMID = '%s'", sTableName, iPoints, SteamID);
+		sessionpoints[client] = sessionpoints[client] + iPoints;
+		SQL_TQuery(db, SQLErrorCheckCallback, query);
+		new pointmsgval = GetConVarInt(pointmsg);
+		if (pointmsgval >=1 && iPoints > 0)
+		{
+			if (pointmsgval == 1)
+				PrintToChatAll("\x04[%s]\x05 %N\x01 got %i points for stunning \x06The Monoculus!!", CHATTAG, client, iPoints)
+			else if (cookieshowrankchanges[client])
+			{
+				PrintToChat(client,"\x04[%s]\x01 you got %i points for stunning \x06The Monoculus!!", CHATTAG, iPoints)
+			}
+		}
+	}
 }
 
 public OnEyeBossDeath(Handle:event, const String:name[], bool:dontBroadcast)
